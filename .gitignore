@@ -1,0 +1,47 @@
+# Build Folders
+bin/
+obj/
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+# Logs
+*.log
+logs/
+
+# Visual Studio Code
+.vscode/
+
+# ASP.NET Core
+appsettings.json
+appsettings.*.json
+
+# Dependency directories
+node_modules/
+bower_components/
+
+# Environment files
+.env
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Rider IDE
+.idea/
+*.iml
+
+# Packages
+*.nupkg
+*.snupkg
+
+# Backup files
+*.bak
+*.swp
+*.tmp
+
+# Generated files
+*.Generated.cs
