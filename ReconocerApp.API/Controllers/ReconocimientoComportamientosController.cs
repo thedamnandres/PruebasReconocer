@@ -1,56 +1,36 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using ReconocerApp.API.Controllers.Base;
 using ReconocerApp.API.Data;
 using ReconocerApp.API.Models;
+using ReconocerApp.API.Models.Responses;
 
 namespace ReconocerApp.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class ReconocimientoComportamientosController : ControllerBase
+public class ReconocimientoComportamientosController : BaseCrudController<ReconocimientoComportamiento, ReconocimientoComportamientoResponse>
 {
-    private readonly ApplicationDbContext _context;
+    public ReconocimientoComportamientosController(ApplicationDbContext context, IMapper mapper)
+        : base(context, mapper) { }
 
-    public ReconocimientoComportamientosController(ApplicationDbContext context)
+    public override async Task<ActionResult<IEnumerable<ReconocimientoComportamientoResponse>>> GetAll()
     {
-        _context = context;
+        var items = await _context.ReconocimientoComportamientos
+            .Include(rc => rc.Comportamiento)
+            .Include(rc => rc.Reconocimiento)
+            .ToListAsync();
+
+        return Ok(_mapper.Map<List<ReconocimientoComportamientoResponse>>(items));
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<ReconocimientoComportamiento>>> GetAll()
-        => await _context.ReconocimientoComportamientos.ToListAsync();
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<ReconocimientoComportamiento>> GetById(int id)
+    public override async Task<ActionResult<ReconocimientoComportamientoResponse>> GetById(object id)
     {
-        var item = await _context.ReconocimientoComportamientos.FindAsync(id);
-        return item is null ? NotFound() : item;
-    }
+        var item = await _context.ReconocimientoComportamientos
+            .Include(rc => rc.Comportamiento)
+            .Include(rc => rc.Reconocimiento)
+            .FirstOrDefaultAsync(rc => rc.Id == (int)id);
 
-    [HttpPost]
-    public async Task<ActionResult<ReconocimientoComportamiento>> Create(ReconocimientoComportamiento data)
-    {
-        _context.ReconocimientoComportamientos.Add(data);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = data.Id }, data);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, ReconocimientoComportamiento data)
-    {
-        if (id != data.Id) return BadRequest();
-        _context.Entry(data).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
-        return NoContent();
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var item = await _context.ReconocimientoComportamientos.FindAsync(id);
-        if (item is null) return NotFound();
-        _context.ReconocimientoComportamientos.Remove(item);
-        await _context.SaveChangesAsync();
-        return NoContent();
+        if (item == null) return NotFound();
+        return Ok(_mapper.Map<ReconocimientoComportamientoResponse>(item));
     }
 }

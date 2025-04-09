@@ -1,56 +1,36 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using ReconocerApp.API.Controllers.Base;
 using ReconocerApp.API.Data;
 using ReconocerApp.API.Models;
+using ReconocerApp.API.Models.Responses;
 
 namespace ReconocerApp.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class MarketplaceComprasController : ControllerBase
+public class MarketplaceComprasController : BaseCrudController<MarketplaceCompra, MarketplaceCompraResponse>
 {
-    private readonly ApplicationDbContext _context;
+    public MarketplaceComprasController(ApplicationDbContext context, IMapper mapper)
+        : base(context, mapper) { }
 
-    public MarketplaceComprasController(ApplicationDbContext context)
+    public override async Task<ActionResult<IEnumerable<MarketplaceCompraResponse>>> GetAll()
     {
-        _context = context;
+        var items = await _context.MarketplaceCompras
+            .Include(c => c.Colaborador)
+            .Include(c => c.Premio)
+            .ToListAsync();
+
+        return Ok(_mapper.Map<List<MarketplaceCompraResponse>>(items));
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<MarketplaceCompra>>> GetAll()
-        => await _context.MarketplaceCompras.ToListAsync();
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<MarketplaceCompra>> GetById(int id)
+    public override async Task<ActionResult<MarketplaceCompraResponse>> GetById(object id)
     {
-        var item = await _context.MarketplaceCompras.FindAsync(id);
-        return item is null ? NotFound() : item;
-    }
+        var item = await _context.MarketplaceCompras
+            .Include(c => c.Colaborador)
+            .Include(c => c.Premio)
+            .FirstOrDefaultAsync(c => c.CompraId == (int)id);
 
-    [HttpPost]
-    public async Task<ActionResult<MarketplaceCompra>> Create(MarketplaceCompra data)
-    {
-        _context.MarketplaceCompras.Add(data);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = data.CompraId }, data);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, MarketplaceCompra data)
-    {
-        if (id != data.CompraId) return BadRequest();
-        _context.Entry(data).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
-        return NoContent();
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var item = await _context.MarketplaceCompras.FindAsync(id);
-        if (item is null) return NotFound();
-        _context.MarketplaceCompras.Remove(item);
-        await _context.SaveChangesAsync();
-        return NoContent();
+        if (item == null) return NotFound();
+        return Ok(_mapper.Map<MarketplaceCompraResponse>(item));
     }
 }

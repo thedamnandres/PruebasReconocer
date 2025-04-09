@@ -1,56 +1,36 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using ReconocerApp.API.Controllers.Base;
 using ReconocerApp.API.Data;
 using ReconocerApp.API.Models;
+using ReconocerApp.API.Models.Responses;
 
 namespace ReconocerApp.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class WalletTransaccionesController : ControllerBase
+public class WalletTransaccionesController : BaseCrudController<WalletTransaccion, WalletTransaccionResponse>
 {
-    private readonly ApplicationDbContext _context;
+    public WalletTransaccionesController(ApplicationDbContext context, IMapper mapper)
+        : base(context, mapper) { }
 
-    public WalletTransaccionesController(ApplicationDbContext context)
+    public override async Task<ActionResult<IEnumerable<WalletTransaccionResponse>>> GetAll()
     {
-        _context = context;
+        var items = await _context.WalletTransacciones
+            .Include(t => t.Categoria)
+            .Include(t => t.Colaborador)
+            .ToListAsync();
+
+        return Ok(_mapper.Map<List<WalletTransaccionResponse>>(items));
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<WalletTransaccion>>> GetAll()
-        => await _context.WalletTransacciones.ToListAsync();
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<WalletTransaccion>> GetById(int id)
+    public override async Task<ActionResult<WalletTransaccionResponse>> GetById(object id)
     {
-        var item = await _context.WalletTransacciones.FindAsync(id);
-        return item is null ? NotFound() : item;
-    }
+        var item = await _context.WalletTransacciones
+            .Include(t => t.Categoria)
+            .Include(t => t.Colaborador)
+            .FirstOrDefaultAsync(t => t.TransaccionId == (int)id);
 
-    [HttpPost]
-    public async Task<ActionResult<WalletTransaccion>> Create(WalletTransaccion data)
-    {
-        _context.WalletTransacciones.Add(data);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = data.TransaccionId }, data);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, WalletTransaccion data)
-    {
-        if (id != data.TransaccionId) return BadRequest();
-        _context.Entry(data).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
-        return NoContent();
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var item = await _context.WalletTransacciones.FindAsync(id);
-        if (item is null) return NotFound();
-        _context.WalletTransacciones.Remove(item);
-        await _context.SaveChangesAsync();
-        return NoContent();
+        if (item == null) return NotFound();
+        return Ok(_mapper.Map<WalletTransaccionResponse>(item));
     }
 }

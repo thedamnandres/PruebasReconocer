@@ -1,56 +1,34 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using ReconocerApp.API.Controllers.Base;
 using ReconocerApp.API.Data;
 using ReconocerApp.API.Models;
+using ReconocerApp.API.Models.Responses;
 
 namespace ReconocerApp.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class InventarioTransaccionesController : ControllerBase
+public class InventarioTransaccionesController : BaseCrudController<InventarioTransaccion, InventarioTransaccionResponse>
 {
-    private readonly ApplicationDbContext _context;
+    public InventarioTransaccionesController(ApplicationDbContext context, IMapper mapper)
+        : base(context, mapper) { }
 
-    public InventarioTransaccionesController(ApplicationDbContext context)
+    public override async Task<ActionResult<IEnumerable<InventarioTransaccionResponse>>> GetAll()
     {
-        _context = context;
+        var items = await _context.InventarioTransacciones
+            .Include(t => t.Premio)
+            .ToListAsync();
+
+        return Ok(_mapper.Map<List<InventarioTransaccionResponse>>(items));
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<InventarioTransaccion>>> GetAll()
-        => await _context.InventarioTransacciones.ToListAsync();
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<InventarioTransaccion>> GetById(int id)
+    public override async Task<ActionResult<InventarioTransaccionResponse>> GetById(object id)
     {
-        var item = await _context.InventarioTransacciones.FindAsync(id);
-        return item is null ? NotFound() : item;
-    }
+        var item = await _context.InventarioTransacciones
+            .Include(t => t.Premio)
+            .FirstOrDefaultAsync(t => t.TransaccionId == (int)id);
 
-    [HttpPost]
-    public async Task<ActionResult<InventarioTransaccion>> Create(InventarioTransaccion data)
-    {
-        _context.InventarioTransacciones.Add(data);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = data.TransaccionId }, data);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, InventarioTransaccion data)
-    {
-        if (id != data.TransaccionId) return BadRequest();
-        _context.Entry(data).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
-        return NoContent();
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var item = await _context.InventarioTransacciones.FindAsync(id);
-        if (item is null) return NotFound();
-        _context.InventarioTransacciones.Remove(item);
-        await _context.SaveChangesAsync();
-        return NoContent();
+        if (item == null) return NotFound();
+        return Ok(_mapper.Map<InventarioTransaccionResponse>(item));
     }
 }

@@ -7,6 +7,5 @@ public class ComportamientoResponse
     public string Nombre { get; set; } = string.Empty;
     public string Descripcion { get; set; } = string.Empty;
     public int WalletOtorgados { get; set; }
-    public Org? Organizacion { get; set; }
+      public OrganizacionResponse? Organizacion { get; set; }
 }
-
