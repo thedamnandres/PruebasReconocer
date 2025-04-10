@@ -5,9 +5,10 @@ FROM sqlite_master
 WHERE type = 'table' AND name = 'MarketplacePremios';
 
 SELECT *
-FROM MarketplacePremios mp
-LEFT JOIN Organizaciones o 
-ON mp.OrganizacionId = o.OrganizacionId
+FROM Organizaciones o
+LEFT JOIN Colaboradores c
+ON o.OrganizacionId = c.OrganizacionId
 WHERE o.Nombre = 'ULatina'
+
 
 

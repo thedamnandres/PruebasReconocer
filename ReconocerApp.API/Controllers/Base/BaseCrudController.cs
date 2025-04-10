@@ -23,7 +23,13 @@ public abstract class BaseCrudController<TEntity, TResponse> : ControllerBase
     }
 
     [HttpGet]
-    public virtual async Task<ActionResult<IEnumerable<TResponse>>> GetAll()
+    public virtual async Task<ActionResult<IEnumerable<TResponse>>> GetAll(
+        [FromQuery] string? filters = null,
+        [FromQuery] string? orderBy = null,
+        [FromQuery] string? orderDirection = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10
+    )
     {
         var list = await _dbSet.ToListAsync();
         return Ok(_mapper.Map<List<TResponse>>(list));
